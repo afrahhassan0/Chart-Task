@@ -33,8 +33,10 @@ namespace chart_api
             //database service
             services.AddDbContext<ApiContext>( opt => opt.UseNpgsql( Configuration.GetConnectionString( "ApiContext" )));
 
-            
+            services.AddMvc();
             services.AddTransient<DataSeed>();
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -47,11 +49,13 @@ namespace chart_api
 
             seed.SeedData( 20 , 200 );
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            app.UseAuthorization();
+            // app.UseMvc( routes => routes.MapRoute(
+            //     "default", "api/{controller}/{action}/{id}"
+            // ));
 
             app.UseEndpoints(endpoints =>
             {
