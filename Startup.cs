@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using Chart.Api.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+// using Microsoft.AspNetCore.HttpsPolicy;
+// using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,13 +29,19 @@ namespace chart_api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            
+            
+            services.AddCors( options => options.AddPolicy("CorsPolicy" ,
+                c => c.AllowAnyHeader()
+                      .AllowAnyOrigin()
+                      .AllowAnyMethod()
+            ));
 
             //database service
             services.AddDbContext<ApiContext>( opt => opt.UseNpgsql( Configuration.GetConnectionString( "ApiContext" )));
 
             services.AddMvc();
             services.AddTransient<DataSeed>();
-
 
         }
 
@@ -45,6 +51,7 @@ namespace chart_api
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseCors("CorsPolicy");
             }
 
             seed.SeedData( 20 , 200 );
@@ -53,10 +60,7 @@ namespace chart_api
 
             app.UseRouting();
 
-            // app.UseMvc( routes => routes.MapRoute(
-            //     "default", "api/{controller}/{action}/{id}"
-            // ));
-
+       
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Chart.Api.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -38,13 +39,31 @@ namespace Chart.Api.Controllers
         [HttpGet("ByState")]
         public IActionResult ByState()
         {
+            var orders = _ctx.Orders.Include( o=> o.Customer ).ToList();//including -joining the two tables by the customer property
+            
+            var result = orders.GroupBy( o => o.Customer.State )
+                                  .ToList()
+                                  .Select( grp=> new{
+                                    State = grp.Key , 
+                                    Total = grp.Sum( x=> x.Total )
+                                  })
+                                  .OrderByDescending( res => res.Total )
+                                  .ToList();
+            
+            return Ok(result);          
+            
+        }
+
+        [HttpGet("ByCustomer")]
+        public IActionResult ByCustomer()
+        {
             var orders = _ctx.Orders.Include( o=> o.Customer ).ToList();  //including -joining the two tables by the customer property
 
-            var groupedResult = orders.GroupBy( o => o.Customer.State )
+            var groupedResult = orders.GroupBy( o => o.Customer?.Id )
                                       .ToList()
                                       .Select( grp=> new{
-                                        State = grp.Key , //key is group key: state
-                                        Total = grp.Sum( x=> x.Total ) //sum of totals for each aggregated group
+                                        Name = _ctx.Customers.Find(grp.Key).Name , 
+                                        Total = grp.Sum( x=> x.Total ) 
                                       })
                                       .OrderByDescending( res => res.Total )
                                       .ToList();
@@ -52,22 +71,31 @@ namespace Chart.Api.Controllers
             return Ok(groupedResult);
         }
 
-        [HttpGet("ByCustomer/{n}")]
-        public IActionResult ByCustomer( int n )
+        [HttpGet("GetOrder/{id}", Name= "GetOrder")]
+        public IActionResult GetOrder( int id )
         {
-            var orders = _ctx.Orders.Include( o=> o.Customer ).ToList();  //including -joining the two tables by the customer property
+            var order = _ctx.Orders.Include( o => o.Customer).First( o=>o.Id == id );
 
-            var groupedResult = orders.GroupBy( o => o.Customer.Id )
-                                      .ToList()
-                                      .Select( grp=> new{
-                                        Name = _ctx.Customers.Find(grp.Key).Name , 
-                                        Total = grp.Sum( x=> x.Total ) 
-                                      })
-                                      .OrderByDescending( res => res.Total )
-                                      .Take(n)
-                                      .ToList();
+            if( order == null )
+            {
+                return BadRequest();
+            }
 
-            return Ok(groupedResult);
+            return Ok(order);
+        }
+
+        [HttpGet ("Costumer/{id}" , Name="GetOrderOfCostumer") ]
+        public IActionResult GetOrderOfCostumer( int id ){
+            var order =_ctx.Orders.Include( o => o.Customer )
+                                  .ToList()
+                                  .FindAll( o => o.Customer.Id == id )
+                                  .ToList();
+            if( order == null )
+            {
+                return BadRequest();
+            }
+
+            return Ok(order);
         }
     }
 }

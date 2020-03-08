@@ -19,9 +19,10 @@ namespace Chart.Api
             if( !_ctx.Customers.Any() )
             {
                 SeedCustomers(nCustomers);
+                 _ctx.SaveChanges(); //commits the transaction in db
+
                
             }
-             _ctx.SaveChanges(); //commits the transaction in db
 
              if( !_ctx.Shippers.Any() )
             {
